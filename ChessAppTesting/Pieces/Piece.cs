@@ -87,6 +87,7 @@ namespace ChessAppTesting.Pieces
             return ParentBoard.TryHandleMovePiece(this, Position, new_position, out error);
         }
 
+        public bool TryRegularTake((int x, int y) from, (int x, int y) to, out string error) => TryRegularTake((to.x - from.x, to.y - from.y), out error);
         public bool TryRegularTake((int dx, int dy) move, out string error)
         {
             if (!IsLegalMove(move))

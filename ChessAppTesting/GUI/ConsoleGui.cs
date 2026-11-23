@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
-using UserCommand = ChessAppTesting.Records.UserCommand;
+using PlayerAction = ChessAppTesting.Records.PlayerAction;
 
 namespace ChessAppTesting.GUI
 {
@@ -15,11 +15,11 @@ namespace ChessAppTesting.GUI
         public static ConsoleGui Instance => _instance.Value;
         private ConsoleGui() { }
 
-        public UserCommand Display(ChessBoard board)
+        public PlayerAction Display(ChessBoard board)
         {
             DisplayBoard(board);
             DisplayUI();
-            UserCommand command = ReadUserInput(board);
+            PlayerAction command = ReadUserInput(board);
 
             return command;
         }
@@ -118,7 +118,7 @@ namespace ChessAppTesting.GUI
         // ========================================
         // HANDLE USER INPUT
         // ========================================
-        public UserCommand ReadUserInput(ChessBoard board)
+        public PlayerAction ReadUserInput(ChessBoard board)
         {
             while (true)
             {
@@ -146,23 +146,38 @@ namespace ChessAppTesting.GUI
             return true;
         }
 
-        private bool TryInterpretCommand(ChessBoard board, string userInput, [NotNullWhen(true)] out UserCommand? command, out string error)
+        private bool TryInterpretCommand(ChessBoard board, string userInput, [NotNullWhen(true)] out PlayerAction? command, out string error)
         {
             error = "";
             userInput = userInput.Trim().ToLowerInvariant();
             var parts = userInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            (int x, int y) from_coords = (-1, -1);
+            (int x, int y) to_coords = (-1, -1);
 
             switch (parts)
             {
                 case ["quit"] or ["q"]:
-                    command = new UserCommand.Quit();
+                    command = new PlayerAction.Quit();
                     return true;
 
                 case ["move", var from, var to]:
-                    if (TryParseAsCoordinates(from, out var from_coords) &&
-                        TryParseAsCoordinates(to, out var to_coords))
+                    if (TryParseAsCoordinates(from, out from_coords) &&
+                        TryParseAsCoordinates(to, out to_coords))
                     {
-                        command = new UserCommand.Move(from_coords, to_coords);
+                        command = new PlayerAction.MoveAction(from_coords, to_coords);
+                        return true;
+                    }
+                    else
+                    {
+                        command = null;
+                        error = "Invalid coordinates.";
+                        return false;
+                    }
+                case ["take", var from, var to]:
+                    if (TryParseAsCoordinates(from, out from_coords) &&
+                        TryParseAsCoordinates(to, out to_coords))
+                    {
+                        command = new PlayerAction.TakeAction(from_coords, to_coords);
                         return true;
                     }
                     else

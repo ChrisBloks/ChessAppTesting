@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using UserCommand = ChessAppTesting.Records.UserCommand;
+using PlayerAction = ChessAppTesting.Records.PlayerAction;
 
 namespace ChessAppTesting.GUI
 {
     internal interface IGUI
     {
-        UserCommand Display(ChessBoard board);
+        PlayerAction Display(ChessBoard board);
     }
 }

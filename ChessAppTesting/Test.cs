@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using UserCommand = ChessAppTesting.Records.UserCommand;
+using PlayerAction = ChessAppTesting.Records.PlayerAction;
 
 namespace ChessAppTesting
 {
@@ -27,9 +27,9 @@ namespace ChessAppTesting
                 // Display the chessboard
                 List<string> test_moves = [
                     "move A2 A3",
-                    "move A3 A4",
-                    "move B2 C3",
-                    "move B1 B3"
+                    "move D7 d5",
+                    "move C2 C4",
+                    "take D5 C4"
                     ];
                 SimulateGameDebug(
                     board: board,
@@ -45,7 +45,7 @@ namespace ChessAppTesting
         {
             error = string.Empty;
             BaseGameManager gm = new BaseGameManager(board);
-            Records.UserCommand? userCommand = null;
+            Records.PlayerAction? userCommand = null;
             for (int i = 0; i <= i_max; i++)
             {
                 userCommand = gui.Display(board);
@@ -66,15 +66,16 @@ namespace ChessAppTesting
             BaseGameManager gm = new BaseGameManager(board);
             ConsoleDebugGui gui = ConsoleDebugGui.Instance;
 
-            List<UserCommand> cmds = [];
+            List<PlayerAction> cmds = [];
             string input = string.Empty;
             bool parsed_correctly = true;
             for(int i = 0; i < moves.Count; i++)
             {
                 input = moves[i];
-                if (!gui.TryInterpretCommand(board, input, out UserCommand? cmd, out error))
+                if (!gui.TryInterpretCommand(board, input, out PlayerAction? cmd, out error))
                 {
-                    Console.WriteLine($"Error parsing commands, reading line {i}");
+                    Console.WriteLine($"Error parsing commands, reading line {i}:");
+                    Console.WriteLine(input);
                     Console.WriteLine(error);
                     parsed_correctly = false;
                 }
@@ -99,6 +100,8 @@ namespace ChessAppTesting
                     return;
                 }
             }
+            gui.DisplayBoard(board);
+            error = "Simulation successful, no errors encountered.";
         }
     }
 }
