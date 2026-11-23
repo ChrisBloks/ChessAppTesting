@@ -146,7 +146,7 @@ namespace ChessAppTesting
         {
             if (!Pieces.TryGetValue(pieceID, out piece))
             {
-                error = "Piece not found.";
+                error = $"Piece {pieceID} not found in Pieces dict!.";
                 return false;
             }
             error = string.Empty;

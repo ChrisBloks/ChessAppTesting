@@ -10,7 +10,7 @@ namespace ChessAppTesting
     public class Square
     {
         // Properties
-        public required (int, int) Coordinates { get; set; }
+        public required (int x, int y) Coordinates { get; set; }
         private PieceID? _piece_id;
 
         // Methods
@@ -19,7 +19,7 @@ namespace ChessAppTesting
             if (_piece_id == null)
             {
                 pieceID = null;
-                error = "No piece on this square.";
+                error = $"No piece on square ({Coordinates.x},{Coordinates.y}).";
                 return false;
             }
             pieceID = _piece_id;

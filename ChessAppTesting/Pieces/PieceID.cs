@@ -42,7 +42,7 @@ namespace ChessAppTesting.Pieces
 
         public string toString()
         {
-            return $"{ID:B10}";
+            return $"{ID}";
         }
     }
 }

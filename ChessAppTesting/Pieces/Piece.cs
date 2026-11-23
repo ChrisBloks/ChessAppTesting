@@ -100,7 +100,7 @@ namespace ChessAppTesting.Pieces
         {
             if (!IsLegalMove(move))
             {
-                error = "Illegal move";
+                error = $"move {move} is illegal for piece {this.ID}."; ;
                 return false;
             }
 
@@ -108,7 +108,7 @@ namespace ChessAppTesting.Pieces
             
             if (!ParentBoard.PositionInBoard(new_position))
             {
-                error = "Move out of bounds";
+                error = $"Move to ({new_position.x},{new_position.y}) out of bounds";
                 return false;
             }
 
@@ -119,7 +119,7 @@ namespace ChessAppTesting.Pieces
 
             if (targetPiece.Color == Color)
             {
-                error = "Cannot take own piece";
+                error = $"Cannot take own piece {targetPiece.ID} at position ({new_position.x},{new_position.y}).";
                 return false;
             }
 
