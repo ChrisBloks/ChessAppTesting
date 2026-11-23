@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics.CodeAnalysis;
+using ChessAppTesting.Enums;
 
 namespace ChessAppTesting
 {
@@ -57,16 +58,19 @@ namespace ChessAppTesting
                     {
                         throw new ArgumentOutOfRangeException($"Position out of bounds: ({x}, {y})");
                     }
-                    if (board.Board[x, y].ContainsPiece())
+                    if (board.IsPositionOccupied((x, y), out error))
                     {
-                        throw new InvalidOperationException($"Square ({x}, {y}) is already occupied.");
+                        throw new InvalidOperationException(error);
                     }
 
                     // Create a new piece based on the type and colour
                     Piece piece = CreatePiece(board, colour, pieceType, x, y);
                     // Add the piece to the chessboard
-                    board.Pieces[piece.ID] = piece;
-                    board.Board[x, y].SetPiece(piece.ID);
+                    if (!board.TryAddPieceAtPosition(piece, (x, y), out error))
+                    {
+                        throw new InvalidOperationException(error);
+                    }
+
                     // Add to the appropriate list of pieces
                     if (colour == "W")
                     {
@@ -107,7 +111,10 @@ namespace ChessAppTesting
 
             return pieceType switch
             {
-                "P" => (colour == "W" ? new WhitePawn(board, position) : new BlackPawn(board, position)),
+                "P" => new Pawn(
+                    board,
+                    (colour == "W" ? TeamColor.White : TeamColor.Black),
+                    (x, y)),
                 // Add other piece types here as needed
                 _ => throw new ArgumentException($"Unknown piece type: {pieceType}")
             };

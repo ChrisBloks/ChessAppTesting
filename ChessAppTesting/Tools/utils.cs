@@ -49,11 +49,6 @@ namespace ChessAppTesting.Tools
             {
                 Console.WriteLine($"Piece ID: {piece.ID}");
                 Console.WriteLine($"Position: ({piece.Position.x}, {piece.Position.y})");
-                Console.WriteLine("Candidate Moves:");
-                foreach (var move in piece.CandidateMoves)
-                {
-                    Console.WriteLine($"({move.Item1}, {move.Item2})");
-                }
             }
             else
             {
@@ -75,7 +70,7 @@ namespace ChessAppTesting.Tools
             {
                 col = cols[i];
             }
-            catch (IndexOutOfRangeException e)
+            catch (IndexOutOfRangeException _)
             {
                 col = '?';
                 return false;

@@ -23,7 +23,7 @@ namespace ChessAppTesting
             Board = board;
         }
 
-        public bool TryHandleUserCommand(PlayerAction command, out string error)
+        public bool TryHandleUserCommand(PlayerAction command, out string? error)
         {
             error = "";
             bool success = false;
@@ -53,7 +53,7 @@ namespace ChessAppTesting
 
             return success;
         }
-        private bool TryHandleMove(MoveAction move, out string error)
+        private bool TryHandleMove(MoveAction move, out string? error)
         {
             // Get the piece on the From location
             if (!Board.TryGetPieceAtPosition(move.From, out Piece? selected_piece, out error))
@@ -68,7 +68,7 @@ namespace ChessAppTesting
             }
 
             // See if the To location is a valid move-to
-            if (!selected_piece.IsLegalMove(move.From, move.To))
+            if (!selected_piece.IsLegalMove(move.From, move.To, out error))
             {
                 error = "Illegal move!";
                 return false;
@@ -77,7 +77,7 @@ namespace ChessAppTesting
             return selected_piece.TryRegularMove(move.From, move.To, out error);
         }
 
-        private bool TryHandleTake(TakeAction take, out string error)
+        private bool TryHandleTake(TakeAction take, out string? error)
         {
             // Get the piece on the From location
             if (!Board.TryGetPieceAtPosition(take.From, out Piece? selected_piece, out error))

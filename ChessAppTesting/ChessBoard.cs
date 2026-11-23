@@ -24,7 +24,7 @@ namespace ChessAppTesting
         // Squares
         public int max_x;
         public int max_y;
-        public Square[,] Board { get; set; }
+        private Square[,] Board { get; set; }
 
         // Game logic information
         public (PieceID, (int dx, int dy), (int new_x, int new_y)) LastMove { get; set; } = (PieceID.Empty, (0, 0), (0, 0));
@@ -79,7 +79,7 @@ namespace ChessAppTesting
                     continue;
                 }
                 var piece = Pieces[pieceID];
-                foreach (var move in piece.getLegalMoves(this))
+                foreach (var move in piece.GetLegalMoves(this))
                 {
                     legalMoves.Add((pieceID, move));
                 }
@@ -164,6 +164,18 @@ namespace ChessAppTesting
 
             return Board[position.x, position.y].TryGetPiece(out pieceID, out error);
         }
+
+        public bool IsPositionOccupied((int x, int y) position, out string error)
+        {
+            if (!PositionInBoard(position))
+            {
+                error = "Position (" + position.x + ", " + position.y + ") is out of bounds.";
+                return false;
+            }
+            error = string.Empty;
+            return Board[position.x, position.y].ContainsPiece();
+        }
+
 
         public bool TryGetPieceAtPosition((int x, int y) position, [NotNullWhen(true)] out Piece? piece, out string error)
         {

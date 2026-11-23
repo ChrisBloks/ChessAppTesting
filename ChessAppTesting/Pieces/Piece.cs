@@ -26,7 +26,7 @@ namespace ChessAppTesting.Pieces
         public required PieceType Type { get; set; } = PieceType.None;
         public required (int x, int y) Position { get; set; }
 
-        public required List<(int, int)> CandidateMoves { get; set; } = new();
+        //private List<(int dx, int dy)> LegalMoves { get; set; } = new();
 
         // == Constructors ==========================
         [SetsRequiredMembers]
@@ -50,82 +50,87 @@ namespace ChessAppTesting.Pieces
 
         // == Methods ===============================
 
-        internal bool IsLegalMove((int x, int y) from, (int x, int y) to) => IsLegalMove((to.x - from.x, to.y - from.y));
-        internal bool IsLegalMove((int dx, int dy) move) => IsLegalMove(move, Position, ParentBoard);
-        internal abstract bool IsLegalMove((int dx, int dy) move, (int x, int y) position, ChessBoard board);
+        internal bool IsLegalMove(
+            (int x, int y) from,
+            (int x, int y) to,
+            out string? error) => 
+            IsLegalMove(
+                (to.x - from.x, to.y - from.y),
+                out error);
+
+        internal bool IsLegalMove(
+            (int dx, int dy) move,
+            out string? error) =>
+            IsLegalMove(
+                move,
+                Position,
+                ParentBoard,
+                out error);
+
+        internal abstract bool IsLegalMove(
+            (int dx, int dy) move,
+            (int x, int y) position,
+            ChessBoard board,
+            out string? error);
         
-        public List<(int, int)> getLegalMoves() => getLegalMoves(Position, ParentBoard);
-        public List<(int, int)> getLegalMoves(ChessBoard board) => getLegalMoves(Position, board);
-        public List<(int, int)> getLegalMoves((int x, int y) position, ChessBoard board)
+        public List<(int, int)> GetLegalMoves() =>
+            GetLegalMoves(
+                Position,
+                ParentBoard);
+
+        public List<(int, int)> GetLegalMoves(ChessBoard board) =>
+            GetLegalMoves(
+                Position,
+                board);
+
+        public abstract List<(int, int)> GetLegalMoves(
+            (int x, int y) position,
+            ChessBoard board);
+
+        public bool TryRegularMove(
+            (int x, int y) from,
+            (int x, int y) to,
+            out string? error) =>
+            TryRegularMove(
+                (to.x - from.x, to.y - from.y),
+                out error);
+
+        public bool TryRegularMove(
+            (int dx, int dy) move,
+            out string? error)
         {
-            List<(int, int)> legalMoves = new List<(int, int)>();
-            foreach (var move in CandidateMoves)
+            if (!IsLegalMove(move, out error))
             {
-                if (IsLegalMove(move, position, board))
-                {
-                    legalMoves.Add(move);
-                }
+                return false;
             }
-            return legalMoves;
+            return ParentBoard.TryHandleMovePiece(
+                moving_piece: this,
+                old_position: Position,
+                new_position: (Position.x + move.dx, Position.y + move.dy),
+                error: out error);
         }
 
-        public bool TryRegularMove((int x, int y) from, (int x, int y) to, out string error) => TryRegularMove((to.x - from.x, to.y - from.y), out error);
-        public bool TryRegularMove((int dx, int dy) move, out string error)
+        public bool TryRegularTake(
+            (int x, int y) from,
+            (int x, int y) to,
+            out string? error) => 
+            TryRegularTake(
+                (to.x - from.x, to.y - from.y),
+                out error);
+
+        public bool TryRegularTake(
+            (int dx, int dy) move,
+            out string? error)
         {
-            if (!IsLegalMove(move))
-            {
-                error = "Illegal move";
-                return false;
-            }
-
-            (int x, int y) new_position = (Position.x + move.dx, Position.y + move.dy);
-
-            if (!ParentBoard.PositionInBoard(new_position))
-            {
-                error = "Move out of bounds";
-                return false;
-            }
-
-            if (ParentBoard.TryGetPieceAtPosition(new_position, out _, out error))
-            {
-                error = "Piece blocking this location!";
-                return false; 
-            }
-
-            return ParentBoard.TryHandleMovePiece(this, Position, new_position, out error);
-        }
-
-        public bool TryRegularTake((int x, int y) from, (int x, int y) to, out string error) => TryRegularTake((to.x - from.x, to.y - from.y), out error);
-        public bool TryRegularTake((int dx, int dy) move, out string error)
-        {
-            if (!IsLegalMove(move))
-            {
-                error = $"move {move} is illegal for piece {this.ID}."; ;
-                return false;
-            }
-
-            (int x, int y) new_position = (Position.x + move.dx, Position.y + move.dy);
-            
-            if (!ParentBoard.PositionInBoard(new_position))
-            {
-                error = $"Move to ({new_position.x},{new_position.y}) out of bounds";
-                return false;
-            }
-
-            if (!ParentBoard.TryGetPieceAtPosition(new_position, out var targetPiece, out error))
+            if (!IsLegalMove(move, out error))
             {
                 return false;
             }
-
-            if (targetPiece.Color == Color)
-            {
-                error = $"Cannot take own piece {targetPiece.ID} at position ({new_position.x},{new_position.y}).";
-                return false;
-            }
-
-            // Take the piece
-            ParentBoard.TryHandleTakePiece(this, Position, new_position, out error);
-            return true;
+            return ParentBoard.TryHandleTakePiece(
+                taking_piece: this,
+                old_position: Position,
+                new_position: (Position.x + move.dx, Position.y + move.dy),
+                error: out error);
         }
 
     }
