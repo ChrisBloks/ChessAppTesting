@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ChessAppTesting.Enums
 {
-    enum TeamColor
+    public enum TeamColor
     {
         White = 0,
         Black = 1

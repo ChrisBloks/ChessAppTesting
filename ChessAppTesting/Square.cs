@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace ChessAppTesting
 {
     // Class to represent a square on the chessboard
-    internal class Square
+    public class Square
     {
         // Properties
         public required (int, int) Coordinates { get; set; }
@@ -31,9 +31,9 @@ namespace ChessAppTesting
             return _piece_id != null;
         }
 
-        public void SetPiece(Piece piece)
+        public void SetPiece(PieceID id)
         {
-            _piece_id = piece.ID;
+            _piece_id = id;
         }
 
         public void ClearPiece()

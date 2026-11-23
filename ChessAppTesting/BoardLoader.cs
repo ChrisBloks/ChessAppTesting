@@ -66,7 +66,7 @@ namespace ChessAppTesting
                     Piece piece = CreatePiece(board, colour, pieceType, x, y);
                     // Add the piece to the chessboard
                     board.Pieces[piece.ID] = piece;
-                    board.Board[x, y].SetPiece(piece);
+                    board.Board[x, y].SetPiece(piece.ID);
                     // Add to the appropriate list of pieces
                     if (colour == "W")
                     {

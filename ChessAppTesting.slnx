@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="ChessAppTesting.Tests/ChessAppTesting.Tests.csproj" Id="632df9fa-1cc2-4c7a-85ad-e565558ea9aa" />
   <Project Path="ChessAppTesting/ChessAppTesting.csproj" />
 </Solution>

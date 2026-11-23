@@ -6,7 +6,7 @@ using ChessAppTesting.Enums;
 
 namespace ChessAppTesting.Pieces
 {
-    internal class WhitePawn : Piece
+    public class WhitePawn : Piece
     {
         // == Constructors ==========================
         [SetsRequiredMembers]

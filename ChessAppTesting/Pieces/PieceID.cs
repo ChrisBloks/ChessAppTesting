@@ -8,7 +8,7 @@ using System.Text;
 namespace ChessAppTesting.Pieces
 {
     // Class to represent a unique identifier for each chess piece
-    internal class PieceID
+    public class PieceID
     {
         // == Properties ============================
         public required string ID { get; set; }

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ChessAppTesting.Pieces
 {
-    internal class BlackPawn : Piece
+    public class BlackPawn : Piece
     {
         // == Constructors ==========================
         [SetsRequiredMembers]

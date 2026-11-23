@@ -11,7 +11,7 @@ namespace ChessAppTesting.Pieces
 
 
     // General class for all chess pieces
-    internal abstract class Piece
+    public abstract class Piece
     {
         // == Static Properties ============================
         public static int PieceCount { get; private set; } = 0;
@@ -30,13 +30,21 @@ namespace ChessAppTesting.Pieces
 
         // == Constructors ==========================
         [SetsRequiredMembers]
-        public Piece(ChessBoard parentBoard, TeamColor color, PieceType pieceType, (int x, int y) position)
-        { 
-            ParentBoard = parentBoard;
+        public Piece(
+            ChessBoard parentBoard,
+            TeamColor color,
+            PieceType pieceType,
+            (int x, int y) position)
+        {
             ID = new PieceID(color, pieceType, PieceCount);
+            ParentBoard = parentBoard;
             Color = color;
             Type = pieceType;
             Position = position;
+            if (!parentBoard.TryAddPieceAtPosition(this, position, out string error))
+            {
+                throw new InvalidOperationException(error);
+            }
             PieceCount++;
         }
 

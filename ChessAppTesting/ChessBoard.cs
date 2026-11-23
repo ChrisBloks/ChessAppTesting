@@ -12,7 +12,7 @@ namespace ChessAppTesting
     
 
     // Class to represent the chessboard
-    internal class ChessBoard
+    public class ChessBoard
     {
         // == Properties ============================
         // Pieces
@@ -100,7 +100,7 @@ namespace ChessAppTesting
             }
 
             Board[old_position.x, old_position.y].ClearPiece();
-            Board[new_position.x, new_position.y].SetPiece(moving_piece);
+            Board[new_position.x, new_position.y].SetPiece(moving_piece.ID);
             moving_piece.Position = new_position;
 
             error = string.Empty;
@@ -126,7 +126,7 @@ namespace ChessAppTesting
             }
 
             Board[old_position.x, old_position.y].ClearPiece();
-            Board[new_position.x, new_position.y].SetPiece(taking_piece);
+            Board[new_position.x, new_position.y].SetPiece(taking_piece.ID);
             taking_piece.Position = new_position;
 
             Pieces.Remove(taken_piece.ID);
@@ -173,6 +173,32 @@ namespace ChessAppTesting
                 return false;
             }
             return TryGetPieceByID(pieceID, out piece, out error);
+        }
+
+        public bool TryAddPieceAtPosition(Piece piece, (int x, int y) position, out string error)
+        {
+            if(!PositionInBoard(position))
+            {
+                error = $"Position ({position.x},{position.y}) is out of bounds for board ({max_x},{max_y})";
+                return false;
+            }
+
+            if(Board[position.x, position.y].ContainsPiece())
+            {
+                error = $"Location ({position.x}, {position.y}) is already occupied.";
+                return false;
+            }
+
+            if (Pieces.TryGetValue(piece.ID, out Piece? existing_piece))
+            {
+                error = $"Piece {piece.ID} already exists at location {existing_piece.Position}";
+                return false;
+            }
+
+            error = string.Empty;
+            Pieces.Add(piece.ID, piece);
+            Board[position.x, position.y].SetPiece(piece.ID);
+            return true;
         }
     }
 
