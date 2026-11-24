@@ -11,24 +11,18 @@ namespace ChessAppTesting
     {
         // Properties
         public required (int x, int y) Coordinates { get; set; }
-        private PieceID? _piece_id;
+        private PieceID _piece_id = PieceID.Empty;
 
         // Methods
-        public bool TryGetPiece([NotNullWhen(true)] out PieceID? pieceID, out string error)
+        public bool TryGetPiece([NotNullWhen(true)] out PieceID pieceID)
         {
-            if (_piece_id == null)
-            {
-                pieceID = null;
-                error = $"No piece on square ({Coordinates.x},{Coordinates.y}).";
-                return false;
-            }
             pieceID = _piece_id;
-            error = string.Empty;
-            return true;
+            return pieceID != PieceID.Empty;
         }
+        
         public bool ContainsPiece()
         {
-            return _piece_id != null;
+            return _piece_id != PieceID.Empty;
         }
 
         public void SetPiece(PieceID id)
@@ -38,7 +32,7 @@ namespace ChessAppTesting
 
         public void ClearPiece()
         {
-            _piece_id = null;
+            _piece_id = PieceID.Empty;
         }
 
     }

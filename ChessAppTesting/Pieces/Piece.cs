@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Text;
+using ChessAppTesting.Records;
+using ChessAppTesting.Structs;
 
 namespace ChessAppTesting.Pieces
 {
@@ -24,7 +26,7 @@ namespace ChessAppTesting.Pieces
         public required PieceID ID { get; set; }
         public required TeamColor Color { get; set; }
         public required PieceType Type { get; set; } = PieceType.None;
-        public required (int x, int y) Position { get; set; }
+        public required Position Position { get; set; }
 
         //private List<(int dx, int dy)> LegalMoves { get; set; } = new();
 
@@ -34,16 +36,19 @@ namespace ChessAppTesting.Pieces
             ChessBoard parentBoard,
             TeamColor color,
             PieceType pieceType,
-            (int x, int y) position)
+            Position position)
         {
             ID = new PieceID(color, pieceType, PieceCount);
             ParentBoard = parentBoard;
             Color = color;
             Type = pieceType;
             Position = position;
-            if (!parentBoard.TryAddPieceAtPosition(this, position, out string error))
+            if (!parentBoard.TryAddPieceAtPosition(
+                piece: this,
+                position: position,
+                out _))
             {
-                throw new InvalidOperationException(error);
+                throw new InvalidOperationException($"Failed to add piece {ID} to location {Position}");
             }
             PieceCount++;
         }
@@ -51,87 +56,72 @@ namespace ChessAppTesting.Pieces
         // == Methods ===============================
 
         internal bool IsLegalMove(
-            (int x, int y) from,
-            (int x, int y) to,
-            out string? error) => 
-            IsLegalMove(
-                (to.x - from.x, to.y - from.y),
+            Position from,
+            Position to,
+            out MoveError error) 
+            => IsLegalMove(
+                new Move(from, to),
+                ParentBoard,
                 out error);
 
         internal bool IsLegalMove(
-            (int dx, int dy) move,
-            out string? error) =>
+            MoveDelta moveDelta,
+            out MoveError error) =>
             IsLegalMove(
-                move,
-                Position,
+                new Move(Position, moveDelta),
                 ParentBoard,
                 out error);
 
         internal abstract bool IsLegalMove(
-            (int dx, int dy) move,
-            (int x, int y) position,
+            Move move,
             ChessBoard board,
-            out string? error);
+            out MoveError error);
         
-        public List<(int, int)> GetLegalMoves() =>
-            GetLegalMoves(
+        public List<MoveDelta> GetLegalMoves() 
+            => GetLegalMoves(
                 Position,
                 ParentBoard);
 
-        public List<(int, int)> GetLegalMoves(ChessBoard board) =>
-            GetLegalMoves(
+        public List<MoveDelta> GetLegalMoves(ChessBoard board) 
+            => GetLegalMoves(
                 Position,
                 board);
 
-        public abstract List<(int, int)> GetLegalMoves(
-            (int x, int y) position,
+        public abstract List<MoveDelta> GetLegalMoves(
+            Position position,
             ChessBoard board);
 
         public bool TryRegularMove(
-            (int x, int y) from,
-            (int x, int y) to,
-            out string? error) =>
-            TryRegularMove(
-                (to.x - from.x, to.y - from.y),
-                out error);
+            MoveDelta moveDelta,
+            out MoveResult result)
+            => TryRegularMove(
+                new Move(Position, moveDelta),
+                out result);
 
         public bool TryRegularMove(
-            (int dx, int dy) move,
-            out string? error)
+            Position from,
+            Position to,
+            out MoveResult result) 
+            => TryRegularMove(
+                new Move(from, to),
+                out result);
+
+        public bool TryRegularMove(
+            Move move,
+            out MoveResult result)
         {
-            if (!IsLegalMove(move, out error))
+            if (!IsLegalMove(
+                move,
+                ParentBoard,
+                out MoveError error))
             {
+                result = new MoveResult(error, move);
                 return false;
             }
             return ParentBoard.TryHandleMovePiece(
                 moving_piece: this,
-                old_position: Position,
-                new_position: (Position.x + move.dx, Position.y + move.dy),
-                error: out error);
+                move: move,
+                moveResult: out result);
         }
-
-        public bool TryRegularTake(
-            (int x, int y) from,
-            (int x, int y) to,
-            out string? error) => 
-            TryRegularTake(
-                (to.x - from.x, to.y - from.y),
-                out error);
-
-        public bool TryRegularTake(
-            (int dx, int dy) move,
-            out string? error)
-        {
-            if (!IsLegalMove(move, out error))
-            {
-                return false;
-            }
-            return ParentBoard.TryHandleTakePiece(
-                taking_piece: this,
-                old_position: Position,
-                new_position: (Position.x + move.dx, Position.y + move.dy),
-                error: out error);
-        }
-
     }
 }

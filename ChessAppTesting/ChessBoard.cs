@@ -6,6 +6,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices.Swift;
 using System.Text;
+using ChessAppTesting.Enums;
+using ChessAppTesting.Structs;
+using ChessAppTesting.Records;
 
 namespace ChessAppTesting
 {
@@ -31,6 +34,9 @@ namespace ChessAppTesting
         public bool WhiteKingMayCastle { get; set; } = true;
         public bool BlackKingMayCastle { get; set; } = true;
 
+        private MoveError lastError { get; set; } = MoveError.None;
+        private Move lastMove { get; set; } = new Move(new Position(0, 0), new Position(0, 0));
+
         // == Constructors ==========================
         public ChessBoard(int max_x = 8, int max_y = 8)
         {
@@ -51,135 +57,126 @@ namespace ChessAppTesting
         }
 
         // == Methods ===============================
-        public bool PositionInBoard((int x, int y) position)
+
+        public bool TryGetWhiteMoves(
+            out List<(PieceID, MoveDelta)> legalMoves,
+            out BoardError error)
         {
-            return position.x >= 0  &&
-                position.x < max_x &&
-                position.y >= 0     &&
-                position.y < max_y;
+            return TryGetLegalMoves(
+                WhitePieces,
+                out legalMoves,
+                out error);
         }
 
-        public List<(PieceID, (int dx, int dy))> GetWhiteMoves()
+        public bool TryGetBlackMoves(
+            out List<(PieceID, MoveDelta)> legalMoves,
+            out BoardError error)
         {
-            return GetLegalMoves(WhitePieces);
+            return TryGetLegalMoves(
+                BlackPieces,
+                out legalMoves,
+                out error);
         }
 
-        public List<(PieceID, (int dx, int dy))> GetBlackMoves()
+        public bool TryGetLegalMoves(
+            List<PieceID> pieces,
+            out List<(PieceID, MoveDelta)> legalMoves,
+            out BoardError error)
         {
-            return GetLegalMoves(BlackPieces);
-        }   
+            legalMoves = new();
+            error = BoardError.None;
 
-        public List<(PieceID, (int dx, int dy))> GetLegalMoves(List<PieceID> pieces)
-        {
-            List<(PieceID, (int dx, int dy))> legalMoves = new List<(PieceID, (int dx, int dy))>();
-            foreach (var pieceID in pieces)
+            Piece? piece;
+            foreach (PieceID pieceID in pieces)
             {
-                if (!Pieces.ContainsKey(pieceID))
+                if (!Pieces.TryGetValue(pieceID, out piece))
                 {
+                    error = BoardError.UnknownPieceID;
                     continue;
                 }
-                var piece = Pieces[pieceID];
-                foreach (var move in piece.GetLegalMoves(this))
+                foreach (MoveDelta move in piece.GetLegalMoves(this))
                 {
                     legalMoves.Add((pieceID, move));
                 }
             }
-            return legalMoves;
+            return error == BoardError.None;
         }
 
         public bool TryHandleMovePiece(
             Piece           moving_piece, 
-            (int x, int y)  old_position, 
-            (int x, int y)  new_position,
-            out string      error)
+            Move            move,
+            out MoveResult  moveResult)
         {
-            if (!PositionInBoard(old_position) || !PositionInBoard(new_position))
+            lastMove = move;
+            lastError = MoveError.None;
+
+            if (!PositionInBoard(move.To))
             {
-                error = $"Failed to move piece on the board in ChessBoard.TryHandleMovePiece {old_position} {new_position}";
+                lastError = MoveError.OutOfBounds;
+                moveResult = new(lastError, lastMove);
                 return false;
             }
 
-            Board[old_position.x, old_position.y].ClearPiece();
-            Board[new_position.x, new_position.y].SetPiece(moving_piece.ID);
-            moving_piece.Position = new_position;
+            // If this position is occupied, remove the occupying piece from existence
+            if (IsPositionOccupiedUnchecked(move.To))
+            {
+                PieceID takenPieceID = GetPieceIDAtPosition(move.To);
+                switch (Pieces[takenPieceID].Color) 
+                {
+                    case TeamColor.White:
+                        WhitePieces.Remove(takenPieceID);
+                        break;
+                    case TeamColor.Black:
+                        BlackPieces.Remove(takenPieceID);
+                        break;
+                    default:
+                        break;
+                }
+                Pieces.Remove(takenPieceID);
+            }
 
-            error = string.Empty;
+            SetPieceAtPosition(moving_piece, move.To);
+            moving_piece.Position = move.To;
+            moveResult = new(lastError, lastMove);
             return true;
         }
 
-        public bool TryHandleTakePiece(
-            Piece taking_piece,
-            (int x, int y) old_position, 
-            (int x, int y) new_position,
-            out string error)
-        {
-            if (!PositionInBoard(old_position) || !PositionInBoard(new_position))
-            {
-                error = $"Failed to move piece on the board in ChessBoard.TryHandleTakePiece {old_position} {new_position}";
-                return false;
-            }
-
-            if (!TryGetPieceAtPosition(new_position, out Piece? taken_piece, out error))
-            {
-                error = $"Failed to find a piece to take ChessBoard.TryHandleTakePiece {old_position} {new_position}";
-                return false;
-            }
-
-            Board[old_position.x, old_position.y].ClearPiece();
-            Board[new_position.x, new_position.y].SetPiece(taking_piece.ID);
-            taking_piece.Position = new_position;
-
-            Pieces.Remove(taken_piece.ID);
-            if (taken_piece.Color == Enums.TeamColor.White)
-            {
-                WhitePieces.Remove(taken_piece.ID);
-            }
-            else
-            {
-                BlackPieces.Remove(taken_piece.ID);
-            }
-            error = string.Empty;
-            return true;
-        }
-
-        public bool TryGetPieceByID(PieceID pieceID, [NotNullWhen(true)] out Piece? piece, out string error)
-        {
-            if (!Pieces.TryGetValue(pieceID, out piece))
-            {
-                error = $"Piece {pieceID} not found in Pieces dict!.";
-                return false;
-            }
-            error = string.Empty;
-            return true;
-        }
-
-        public bool TryGetPieceIDAtPosition((int x, int y) position, [NotNullWhen(true)] out PieceID? pieceID, out string error)
+        public bool TryAddPieceAtPosition(
+            Piece piece,
+            Position position,
+            out BoardError error)
         {
             if (!PositionInBoard(position))
             {
-                pieceID = null;
-                error = "Position (" + position.x + ", " + position.y + ") is out of bounds.";
+                error = BoardError.OutOfBounds;
                 return false;
             }
 
-            return Board[position.x, position.y].TryGetPiece(out pieceID, out error);
-        }
-
-        public bool IsPositionOccupied((int x, int y) position, out string error)
-        {
-            if (!PositionInBoard(position))
+            if (IsPositionOccupiedUnchecked(position))
             {
-                error = "Position (" + position.x + ", " + position.y + ") is out of bounds.";
+                error = BoardError.CannotPlacePieceOnOccupiedSquare;
                 return false;
             }
-            error = string.Empty;
-            return Board[position.x, position.y].ContainsPiece();
+
+            if (Pieces.ContainsKey(piece.ID))
+            {
+                error = BoardError.CannotAddSamePieceTwice;
+                return false;
+            }
+
+            error = BoardError.None;
+            Pieces.Add(piece.ID, piece);
+            SetPieceAtPosition(piece.ID, position);
+            return true;
         }
 
 
-        public bool TryGetPieceAtPosition((int x, int y) position, [NotNullWhen(true)] out Piece? piece, out string error)
+        public bool TryGetPieceAtPosition(
+            Position position,
+            [NotNullWhen(true)] out Piece? piece,
+            out BoardError error)
         {
-            if (!TryGetPieceIDAtPosition(position, out var pieceID, out error))
+            if (!TryGetPieceIDAtPosition(position, out PieceID pieceID, out error))
             {
                 piece = null;
                 return false;
@@ -187,31 +184,72 @@ namespace ChessAppTesting
             return TryGetPieceByID(pieceID, out piece, out error);
         }
 
-        public bool TryAddPieceAtPosition(Piece piece, (int x, int y) position, out string error)
+        public bool TryGetPieceIDAtPosition(
+            Position position,
+            out PieceID pieceID,
+            out BoardError error)
         {
-            if(!PositionInBoard(position))
+            if (!PositionInBoard(position))
             {
-                error = $"Position ({position.x},{position.y}) is out of bounds for board ({max_x},{max_y})";
+                pieceID = PieceID.Empty;
+                error = BoardError.OutOfBounds;
                 return false;
             }
 
-            if(Board[position.x, position.y].ContainsPiece())
+            pieceID = GetPieceIDAtPosition(position);
+            error = BoardError.None;
+            return pieceID != PieceID.Empty;
+        }
+
+        public bool TryGetPieceByID(
+            PieceID pieceID,
+            [NotNullWhen(true)] out Piece? piece,
+            out BoardError error)
+        {
+            if (!Pieces.TryGetValue(pieceID, out piece))
             {
-                error = $"Location ({position.x}, {position.y}) is already occupied.";
+                error = BoardError.UnknownPieceID;
                 return false;
             }
-
-            if (Pieces.TryGetValue(piece.ID, out Piece? existing_piece))
-            {
-                error = $"Piece {piece.ID} already exists at location {existing_piece.Position}";
-                return false;
-            }
-
-            error = string.Empty;
-            Pieces.Add(piece.ID, piece);
-            Board[position.x, position.y].SetPiece(piece.ID);
+            error = BoardError.None;
             return true;
         }
+
+        public bool PositionInBoard(Position position)
+            => position.X >= 0 &&
+                position.X < max_x &&
+                position.Y >= 0 &&
+                position.Y < max_y;
+
+        public bool IsPositionOccupied(Position position)
+        {
+            if (!PositionInBoard(position))
+            {
+                lastError = MoveError.OutOfBounds;
+                return false;
+            }
+            return IsPositionOccupiedUnchecked(position);
+        }
+
+        private bool IsPositionOccupiedUnchecked(Position position)
+        {
+            return Board[position.X, position.Y].ContainsPiece();
+        }
+
+        private PieceID GetPieceIDAtPosition(Position position)
+        {
+            Board[position.X, position.Y].TryGetPiece(out PieceID pieceID);
+            return pieceID;
+        }
+             
+        private void ClearPieceAtPosition(Position position)
+            => Board[position.X, position.Y].ClearPiece();
+
+        private void SetPieceAtPosition(PieceID pieceID, Position position)
+            => Board[position.X, position.Y].SetPiece(pieceID);
+        private void SetPieceAtPosition(Piece piece, Position position)
+            => Board[position.X, position.Y].SetPiece(piece.ID);
+
     }
 
 

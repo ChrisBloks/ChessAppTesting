@@ -1,8 +1,9 @@
-﻿using System;
+﻿using ChessAppTesting.Enums;
+using ChessAppTesting.Records;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using ChessAppTesting.Enums;
 
 namespace ChessAppTesting.Pieces
 {
@@ -10,65 +11,68 @@ namespace ChessAppTesting.Pieces
     public class Bishop(
         ChessBoard board,
         TeamColor teamColor,
-        (int x, int y) position)
+        Position position)
         : Piece(board, teamColor, PieceType.Bishop, position)
     {
         internal override bool IsLegalMove(
-            (int dx, int dy) move,
-            (int x, int y) position,
+            Move move,
             ChessBoard board,
-            out string? error)
+            out MoveError error)
         {
-            error = string.Empty;
-            return IsDiagonalPathClear(move, Position, ParentBoard);
+            if (move.From != Position)
+            {
+                error = MoveError.PieceNotAtFromLocation;
+                return false;
+            }
+            return IsDiagonalPathClear(move.ToDelta(), Position, ParentBoard, out error);
         }
 
-        public override List<(int, int)> GetLegalMoves(
-            (int x, int y) position,
+        public override List<MoveDelta> GetLegalMoves(
+            Position position,
             ChessBoard board)
         {
             throw new NotImplementedException();
         }
 
         private bool IsDiagonalPathClear(
-            (int dx, int dy) move,
-            (int x, int y) startPosition,
-            ChessBoard board)
+            MoveDelta moveDelta,
+            Position startPosition,
+            ChessBoard board,
+            out MoveError error)
         {
-            if (!IsMoveDiagonal(move))
+            if (!moveDelta.IsDiagonal())
             {
+                error = MoveError.InvallidMoveForThisPiece;
                 return false;
             }
 
-            (int dx, int dy) dir = (Math.Sign(move.dx), Math.Sign(move.dy));
-            int distance = Math.Abs(move.dx);
+            MoveDelta direction = moveDelta.Direction();
+            int distance = moveDelta.Xdistance();
 
-            (int x, int y) temp_pos;
+            Position tempPosition;
             for (int i = 1; i < distance; i++)
             {
-                temp_pos = (startPosition.x + dir.dx * i, startPosition.y + dir.dy * i);
-                if (board.IsPositionOccupied(temp_pos, out _))
+                tempPosition = startPosition + (direction * i);
+                if (board.IsPositionOccupied(tempPosition))
                 {
+                    error = MoveError.BlockedByPiece;
                     return false;
                 }
             }
 
-            (int x, int y) new_position = (startPosition.x + move.dx, startPosition.y + move.dy);
+            tempPosition = startPosition + moveDelta;
             if (board.TryGetPieceAtPosition(
-                    new_position,
+                    tempPosition,
                     out Piece? mystery_piece,
                     out _) &&
                 mystery_piece.Color == this.Color) 
             {
+                error = MoveError.CannotTakeOwnPiece;
                 return false;
             }
 
+            error = MoveError.None;
             return true;
-        }
-
-        private bool IsMoveDiagonal((int dx, int dy) move)
-        {
-            return Math.Abs(move.dx) == Math.Abs(move.dy);
         }
 
     }

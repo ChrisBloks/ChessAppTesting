@@ -8,5 +8,8 @@ namespace ChessAppTesting.Records
     {
         public static Position operator +(Position pos, MoveDelta d)
             => new(pos.X + d.Dx, pos.Y + d.Dy);
+
+        public static implicit operator Position((int x, int y) pos)
+            => new(pos.x, pos.y);
     }
 }

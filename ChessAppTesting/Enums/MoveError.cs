@@ -8,10 +8,12 @@ namespace ChessAppTesting.Enums
     {
         None,
         OutOfBounds,
-        BlockedByOwnPiece,
-        BlockedByOtherPiece,
+        BlockedByPiece,
+        CannotTakeOwnPiece,
         PathBlocked,
         InvallidMoveForThisPiece,
+        CannotTakeOnEmpty,
+        PieceNotAtFromLocation,
         LeavesKingInCheck,
     }
 }
