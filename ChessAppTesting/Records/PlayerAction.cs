@@ -8,7 +8,7 @@ namespace ChessAppTesting.Records
 {
     
 
-    abstract record PlayerAction
+    public abstract record PlayerAction
     {
         public sealed record Quit() : PlayerAction;
         public sealed record MoveAction((int x, int y) From, (int x, int y) To) : PlayerAction

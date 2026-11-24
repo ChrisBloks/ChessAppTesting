@@ -1,4 +1,6 @@
-﻿using ChessAppTesting.GUI;
+﻿using ChessAppTesting.Enums;
+using ChessAppTesting.GUI;
+using ChessAppTesting.Pieces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -16,7 +18,7 @@ namespace ChessAppTesting
             // Load the chessboard from a file
             string file = BoardsPath + "Test_1.csv";
 
-            if (!BoardLoader.TryLoadFromCSV(file, out ChessBoard? board, out string error))
+            if (!BoardLoader.TryLoadFromCSV(file, out ChessBoard? board, out string? error))
             {
                 Console.WriteLine($"Error: {error}");
             }
@@ -41,7 +43,7 @@ namespace ChessAppTesting
 
         }
 
-        public static void SimulateGame(ChessBoard board, IGUI gui, int i_max, out string error)
+        public static void SimulateGame(ChessBoard board, IGUI gui, int i_max, out string? error)
         {
             error = string.Empty;
             BaseGameManager gm = new BaseGameManager(board);
@@ -60,7 +62,7 @@ namespace ChessAppTesting
             }
         }
 
-        public static void SimulateGameDebug(ChessBoard board, List<string> moves, out string error)
+        public static void SimulateGameDebug(ChessBoard board, List<string> moves, out string? error)
         {
             error = string.Empty;
             BaseGameManager gm = new BaseGameManager(board);

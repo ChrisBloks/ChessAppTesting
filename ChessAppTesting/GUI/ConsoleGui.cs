@@ -9,7 +9,7 @@ using PlayerAction = ChessAppTesting.Records.PlayerAction;
 
 namespace ChessAppTesting.GUI
 {
-    internal sealed class ConsoleGui : IGUI
+    public class ConsoleGui : IGUI
     {
         private static readonly Lazy<ConsoleGui> _instance = new(() => new ConsoleGui());
         public static ConsoleGui Instance => _instance.Value;

@@ -22,13 +22,6 @@ namespace ChessAppTesting.Pieces
             (int x, int y) new_position;
 
             new_position = (Position.x + move.dx, Position.y + move.dy);
-            // If the new position is not on the board, return false
-            if (!board.PositionInBoard(new_position))
-            {
-                error = $"Location ({new_position.x},{new_position.y}) is not in {ID}'s board ({board.max_x},{board.max_y}).";
-                return false;
-            }
-
 
             int dir = this.Color == TeamColor.White ? 1 : -1;
             move.dy *= dir;
