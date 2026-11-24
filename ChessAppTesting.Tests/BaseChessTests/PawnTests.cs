@@ -17,8 +17,6 @@ namespace ChessAppTesting.Tests.BaseChessTests
 
             Assert.True(board.TryGetPieceAtPosition((0,1), out Piece? mystery_piece, out string error), error);
             Assert.Equal(pawn, mystery_piece);
-
-            
         }
 
         [Fact]
@@ -31,6 +29,20 @@ namespace ChessAppTesting.Tests.BaseChessTests
 
 
             Assert.Equal((0, 2), pawn.Position);
+            Assert.True(board.TryGetPieceAtPosition(pawn.Position, out Piece? mystery_piece, out string error), error);
+            Assert.Equal(pawn, mystery_piece);
+        }
+
+        [Fact]
+        public void BlackPawn_CanForwardMove()
+        {
+            ChessBoard board = new ChessBoard(5, 5);
+
+            var pawn = new Pawn(board, TeamColor.Black, (0, 4));
+            pawn.TryRegularMove(move: (0, -1), out string? _);
+
+
+            Assert.Equal((0, 3), pawn.Position);
             Assert.True(board.TryGetPieceAtPosition(pawn.Position, out Piece? mystery_piece, out string error), error);
             Assert.Equal(pawn, mystery_piece);
         }
@@ -49,6 +61,21 @@ namespace ChessAppTesting.Tests.BaseChessTests
         }
 
         [Fact]
+        public void BlackPawn_CanMoveForwardTwiceFromSecondToLastRow()
+        {
+            ChessBoard board = new ChessBoard(5, 5);
+
+            var pawn = new Pawn(board, TeamColor.Black, (0, 4));
+            pawn.TryRegularMove((0, -2), out string? _);
+
+            Assert.Equal((0, 2), pawn.Position);
+            Assert.True(board.TryGetPieceAtPosition(pawn.Position, out Piece? mystery_piece, out string error), error);
+            Assert.Equal(pawn, mystery_piece);
+        }
+
+
+
+        [Fact]
         public void WhitePawn_IsBlockedByOtherPiece()
         {
             ChessBoard board = new ChessBoard(5, 5);
@@ -58,6 +85,18 @@ namespace ChessAppTesting.Tests.BaseChessTests
             Assert.False(pawn.TryRegularMove(move: (0, 1), out string? _));
             Assert.Equal(pawn.Position, (0, 1));
             Assert.Equal(other_pawn.Position, (0, 2));
+        }
+
+        [Fact]
+        public void BlackPawn_IsBlockedByOtherPiece()
+        {
+            ChessBoard board = new ChessBoard(5, 5);
+            var pawn = new Pawn(board, TeamColor.Black, (0, 4));
+            var other_pawn = new Pawn(board, TeamColor.White, (0, 3));
+
+            Assert.False(pawn.TryRegularMove(move: (0, 1), out string? _));
+            Assert.Equal(pawn.Position, (0, 4));
+            Assert.Equal(other_pawn.Position, (0, 3));
         }
 
         [Fact]
@@ -80,6 +119,25 @@ namespace ChessAppTesting.Tests.BaseChessTests
         }
 
         [Fact]
+        public void BlackPawn_CanTakePiece()
+        {
+            ChessBoard board = new ChessBoard(2, 2);
+            var pawn = new Pawn(board, TeamColor.Black, (0, 1));
+            var other_pawn = new Pawn(board, TeamColor.White, (1, 0));
+
+            Assert.True(
+                pawn.TryRegularTake(
+                    move: (1, -1),
+                    out string? error
+                ),
+                error
+             );
+            Assert.Equal((1, 0), pawn.Position);
+            Assert.True(board.TryGetPieceAtPosition(pawn.Position, out Piece? mystery_piece, out error), error);
+            Assert.Equal(pawn, mystery_piece);
+        }
+
+        [Fact]
         public void WhitePawn_CannotTakeOwnPiece()
         {
             ChessBoard board = new ChessBoard(2, 2);
@@ -95,6 +153,25 @@ namespace ChessAppTesting.Tests.BaseChessTests
              );
             Assert.Equal((0, 0), pawn.Position);
             Assert.True(board.TryGetPieceAtPosition((1,1), out Piece? mystery_piece, out error), error);
+            Assert.Equal(other_pawn, mystery_piece);
+        }
+
+        [Fact]
+        public void BlackPawn_CannotTakeOwnPiece()
+        {
+            ChessBoard board = new ChessBoard(2, 2);
+            var pawn = new Pawn(board, TeamColor.Black, (0, 1));
+            var other_pawn = new Pawn(board, TeamColor.Black, (1, 0));
+
+            Assert.False(
+                pawn.TryRegularTake(
+                    move: (1, -1),
+                    out string? error
+                ),
+                error
+             );
+            Assert.Equal((0, 1), pawn.Position);
+            Assert.True(board.TryGetPieceAtPosition((1, 0), out Piece? mystery_piece, out error), error);
             Assert.Equal(other_pawn, mystery_piece);
         }
     }
