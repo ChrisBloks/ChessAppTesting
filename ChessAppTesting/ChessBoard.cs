@@ -19,9 +19,10 @@ namespace ChessAppTesting
         // == Properties ============================
         // Pieces
         public Dictionary<PieceID, Piece> Pieces { get; set; } = new Dictionary<PieceID, Piece>();
+        private Dictionary<PieceID, Position> PieceLocations { get; set; } = new();
         public List<PieceID> WhitePieces { get; set; } = new List<PieceID>();
         public List<PieceID> BlackPieces { get; set; } = new List<PieceID>();
-
+        
 
         // Squares
         public int max_x;
@@ -29,7 +30,7 @@ namespace ChessAppTesting
         private Square[,] Board { get; set; }
 
         // Game logic information
-        public (PieceID, (int dx, int dy), (int new_x, int new_y)) LastMove { get; set; } = (PieceID.Empty, (0, 0), (0, 0));
+        public (PieceID, Move) LastMove { get; set; } = (PieceID.Empty, ((0, 0), (0, 0)));
         public bool WhiteKingMayCastle { get; set; } = true;
         public bool BlackKingMayCastle { get; set; } = true;
 
@@ -132,11 +133,14 @@ namespace ChessAppTesting
                         break;
                 }
                 Pieces.Remove(takenPieceID);
+                PieceLocations.Remove(takenPieceID);
+                ClearPieceAtPosition(move.To);
             }
 
-            ClearPieceAtPosition(move.From);
-            SetPieceAtPosition(moving_piece, move.To);
-            moving_piece.Position = move.To;
+            UpdatePiecePosition(
+                piece: moving_piece,
+                oldPos: move.From,
+                newPos: move.To);
             moveResult = new(lastError, lastMove);
             return true;
         }
@@ -177,7 +181,11 @@ namespace ChessAppTesting
                 default:
                     break;
             }
-            SetPieceAtPosition(piece.ID, position);
+
+            UpdatePiecePosition(
+                piece: piece,
+                oldPos: null,
+                newPos: position);
             return true;
         }
 
@@ -255,7 +263,31 @@ namespace ChessAppTesting
             Board[position.X, position.Y].TryGetPiece(out PieceID pieceID);
             return pieceID;
         }
-             
+
+
+        public bool TryGetPiecePosition(Piece piece, out Position pos)
+            => TryGetPiecePosition(piece.ID, out pos);
+        public bool TryGetPiecePosition(PieceID id, out Position pos)
+            => PieceLocations.TryGetValue(id, out pos);
+
+        private void UpdatePiecePosition(Piece piece, Position? oldPos, Position newPos)
+            => UpdatePiecePosition(piece.ID, oldPos, newPos);
+        private void UpdatePiecePosition(PieceID ID, Position? oldPos, Position newPos)
+        {
+            if(oldPos != null)
+            {
+                ClearPieceAtPosition(oldPos);
+            }
+            PieceLocations[ID] = newPos;
+            SetPieceAtPosition(ID, newPos);
+        }
+
+        
+        private Position GetPiecePosition(Piece piece)
+            => GetPiecePosition(piece.ID);
+        public Position GetPiecePosition(PieceID id)
+            => PieceLocations[id];
+
         private void ClearPieceAtPosition(Position position)
             => Board[position.X, position.Y].ClearPiece();
 

@@ -14,7 +14,7 @@ namespace ChessAppTesting.Pieces
         public required string ID { get; set; }
 
         // Static property to represent an empty piece ID
-        public static PieceID Empty { get; } = new PieceID { ID = "Empty" };
+        public static readonly PieceID Empty = new() { ID = "Empty" };
 
 
         // == Constructors ==========================
@@ -34,7 +34,7 @@ namespace ChessAppTesting.Pieces
             return new PieceID(color, pieceType, pieceCount);
         }
 
-        public static String PreviewID(TeamColor color, PieceType pieceType, int pieceCount)
+        public static string PreviewID(TeamColor color, PieceType pieceType, int pieceCount)
         {
             return Utils.toPieceID(color) + Utils.toPieceID(pieceType) + Utils.toPieceID(pieceCount);
 

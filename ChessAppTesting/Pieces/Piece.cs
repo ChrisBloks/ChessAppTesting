@@ -25,7 +25,7 @@ namespace ChessAppTesting.Pieces
         public required PieceID ID { get; set; }
         public required TeamColor Color { get; set; }
         public required PieceType Type { get; set; } = PieceType.None;
-        public required Position Position { get; set; }
+        public Position Position => ParentBoard.GetPiecePosition(ID);
 
         //private List<(int dx, int dy)> LegalMoves { get; set; } = new();
 
@@ -41,7 +41,6 @@ namespace ChessAppTesting.Pieces
             ParentBoard = parentBoard;
             Color = color;
             Type = pieceType;
-            Position = position;
             if (!parentBoard.TryAddPieceAtPosition(
                 piece: this,
                 position: position,
