@@ -142,9 +142,11 @@ namespace ChessAppTesting.Tests.BaseChessTests
         {
             MoveResult result;
             GameError error;
-            ChessBoard board = new ChessBoard(2, 2);
+            Piece? mysteryPiece;
+            ChessBoard board = new ChessBoard(2, 3);
             var pawn = new Pawn(board, TeamColor.White, (0, 0));
-            var other_pawn = new Pawn(board, TeamColor.Black, (1, 1));
+            new Pawn(board, TeamColor.Black, (1, 1));
+            new Pawn(board, TeamColor.Black, (0, 2));
 
             Assert.True(
                 pawn.TryRegularMove(
@@ -155,10 +157,24 @@ namespace ChessAppTesting.Tests.BaseChessTests
             Assert.True(
                 board.TryGetPieceAtPosition(
                     position: pawn.Position,
-                    piece: out Piece? mystery_piece,
+                    piece: out mysteryPiece,
                     error: out error),
                 GameErrorExtensions.ToString(error));
-            Assert.Equal(pawn, mystery_piece);
+            Assert.Equal(pawn, mysteryPiece);
+
+            Assert.True(
+                pawn.TryRegularMove(
+                    moveDelta: (-1, 1),
+                    out result),
+                result.Message);
+            Assert.Equal((0, 2), pawn.Position);
+            Assert.True(
+                board.TryGetPieceAtPosition(
+                    position: pawn.Position,
+                    piece: out mysteryPiece,
+                    error: out error),
+                GameErrorExtensions.ToString(error));
+            Assert.Equal(pawn, mysteryPiece);
         }
 
         [Fact]
@@ -166,23 +182,39 @@ namespace ChessAppTesting.Tests.BaseChessTests
         {
             MoveResult result;
             GameError error;
-            ChessBoard board = new ChessBoard(2, 2);
-            var pawn = new Pawn(board, TeamColor.Black, (0, 1));
-            var other_pawn = new Pawn(board, TeamColor.White, (1, 0));
+            Piece? mysteryPiece;
+            ChessBoard board = new ChessBoard(2, 3);
+            var pawn = new Pawn(board, TeamColor.Black, (0, 2));
+            new Pawn(board, TeamColor.White, (1, 1));
+            new Pawn(board, TeamColor.White, (0, 0));
 
             Assert.True(
                 pawn.TryRegularMove(
                     moveDelta: (1, -1),
                     out result),
                 result.Message);
-            Assert.Equal((1, 0), pawn.Position);
+            Assert.Equal((1, 1), pawn.Position);
             Assert.True(
                 board.TryGetPieceAtPosition(
                     position: pawn.Position,
-                    piece: out Piece? mystery_piece,
+                    piece: out mysteryPiece,
                     error: out error),
                 GameErrorExtensions.ToString(error)); 
-            Assert.Equal(pawn, mystery_piece);
+            Assert.Equal(pawn, mysteryPiece);
+
+            Assert.True(
+                pawn.TryRegularMove(
+                    moveDelta: (-1, -1),
+                    out result),
+                result.Message);
+            Assert.Equal((0, 0), pawn.Position);
+            Assert.True(
+                board.TryGetPieceAtPosition(
+                    position: pawn.Position,
+                    piece: out mysteryPiece,
+                    error: out error),
+                GameErrorExtensions.ToString(error));
+            Assert.Equal(pawn, mysteryPiece);
         }
 
         [Fact]
