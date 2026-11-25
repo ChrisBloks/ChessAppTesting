@@ -9,6 +9,9 @@ namespace ChessAppTesting.Records
         public static MoveDelta operator +(MoveDelta A, MoveDelta B)
             => new(A.Dx + B.Dx, A.Dy + B.Dy);
 
+        public static MoveDelta operator *(int B, MoveDelta A)
+            => A * B;
+
         public static MoveDelta operator *(MoveDelta A, int B)
             => new(A.Dx * B, A.Dy * B);
 

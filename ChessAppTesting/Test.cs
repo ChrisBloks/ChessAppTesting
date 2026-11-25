@@ -1,6 +1,7 @@
 ﻿using ChessAppTesting.Enums;
 using ChessAppTesting.GUI;
 using ChessAppTesting.Pieces;
+using ChessAppTesting.Records;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,9 +30,15 @@ namespace ChessAppTesting
                 // Display the chessboard
                 List<string> test_moves = [
                     "move A2 A3",
-                    "move D7 d5",
+                      "move D7 d5",
                     "move C2 C4",
-                    "take D5 C4"
+                      "move D5 C4",
+                    "move B2 B3",
+                      "move E7 E5",
+                    "move C1 B2",
+                      "move C4 B3",
+                    "move B2 E5",
+
                     ];
                 SimulateGameDebug(
                     board: board,
@@ -39,20 +46,24 @@ namespace ChessAppTesting
                     error: out error
                 );
                 Console.WriteLine($"Error?: {error}");
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey(false);
             }
 
         }
 
         public static void SimulateGame(ChessBoard board, IGUI gui, int i_max, out string? error)
         {
+            IActionResult actionResult;
             error = string.Empty;
             BaseGameManager gm = new BaseGameManager(board);
             Records.PlayerAction? userCommand = null;
             for (int i = 0; i <= i_max; i++)
             {
                 userCommand = gui.Display(board);
-                if (!gm.TryHandleUserCommand(userCommand, out error))
+                if (!gm.TryHandleUserCommand(userCommand, out actionResult))
                 {
+                    error = actionResult.Message;
                     Console.WriteLine($"Error: {error}");
                 }
                 else
@@ -62,7 +73,10 @@ namespace ChessAppTesting
             }
         }
 
-        public static void SimulateGameDebug(ChessBoard board, List<string> moves, out string? error)
+        public static void SimulateGameDebug(
+            ChessBoard board,
+            List<string> moves,
+            out string? error)
         {
             error = string.Empty;
             BaseGameManager gm = new BaseGameManager(board);
@@ -96,8 +110,9 @@ namespace ChessAppTesting
             foreach (var cmd in cmds)
             {
                 gui.Display(board, cmd);
-                if (!gm.TryHandleUserCommand(cmd, out error))
+                if (!gm.TryHandleUserCommand(cmd, out IActionResult result))
                 {
+                    error = result.Message; 
                     Console.WriteLine($"Error handling command {cmd}");
                     return;
                 }

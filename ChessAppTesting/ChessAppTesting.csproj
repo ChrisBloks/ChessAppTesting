@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Folder Include="InitialBoardStates\" />
+    <Folder Include="Structs\" />
     <Folder Include="Tools\exceptions\" />
   </ItemGroup>
 

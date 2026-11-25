@@ -4,20 +4,24 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using ChessAppTesting.Enums;
+using ChessAppTesting.Records;
 
 namespace ChessAppTesting
 {
     // Class to handle loading the chessboard from a csv file
     internal class BoardLoader
     {
-        public static bool TryLoadFromCSV(string csvFilePath,[NotNullWhen(true)] out ChessBoard? board, out string error)
+        public static bool TryLoadFromCSV(
+            string csvFilePath,
+            [NotNullWhen(true)] out ChessBoard? board,
+            out string error)
         {
 
             string[] lines;
             // Read the CSV file
             try
             { 
-                lines = System.IO.File.ReadAllLines(csvFilePath);
+                lines = File.ReadAllLines(csvFilePath);
             }
             catch (Exception ex)
             {
@@ -28,6 +32,8 @@ namespace ChessAppTesting
 
             int max_x = 8;
             int max_y = 8;
+            int x;
+            int y;
             board = new ChessBoard(max_x, max_y);
             error = string.Empty;
             // Skip the header line and process each piece
@@ -52,34 +58,19 @@ namespace ChessAppTesting
                         throw new ArgumentException($"Invalid piece type: {pieceType}");
                     }
 
-                    int x = int.Parse(parts[2].Trim());
-                    int y = int.Parse(parts[3].Trim());
+                    x = int.Parse(parts[2].Trim());
+                    y = int.Parse(parts[3].Trim());
                     if (!board.PositionInBoard((x, y)))
                     {
                         throw new ArgumentOutOfRangeException($"Position out of bounds: ({x}, {y})");
                     }
-                    if (board.IsPositionOccupied((x, y), out error))
+                    if (board.IsPositionOccupied((x, y)))
                     {
-                        throw new InvalidOperationException(error);
+                        throw new InvalidOperationException("Tried to place a piece at an occupied position.");
                     }
 
                     // Create a new piece based on the type and colour
                     Piece piece = CreatePiece(board, colour, pieceType, x, y);
-                    // Add the piece to the chessboard
-                    if (!board.TryAddPieceAtPosition(piece, (x, y), out error))
-                    {
-                        throw new InvalidOperationException(error);
-                    }
-
-                    // Add to the appropriate list of pieces
-                    if (colour == "W")
-                    {
-                        board.WhitePieces.Add(piece.ID);
-                    }
-                    else if (colour == "B")
-                    {
-                        board.BlackPieces.Add(piece.ID);
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -109,12 +100,18 @@ namespace ChessAppTesting
                 throw new ArgumentException($"Position out of bounds: ({x}, {y})");
             }
 
+            TeamColor color = colour == "W" ? TeamColor.White : TeamColor.Black;
+
             return pieceType switch
             {
                 "P" => new Pawn(
                     board,
-                    (colour == "W" ? TeamColor.White : TeamColor.Black),
+                    color,
                     (x, y)),
+                "B" => new Bishop(
+                    board,
+                    color,
+                    (x,y)),
                 // Add other piece types here as needed
                 _ => throw new ArgumentException($"Unknown piece type: {pieceType}")
             };

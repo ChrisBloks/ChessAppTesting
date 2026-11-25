@@ -1,5 +1,6 @@
 ﻿using ChessAppTesting.Enums;
 using ChessAppTesting.Pieces;
+using ChessAppTesting.Records;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -23,29 +24,28 @@ namespace ChessAppTesting
             Board = board;
         }
 
-        public bool TryHandleUserCommand(PlayerAction command, out string? error)
-        {
-            error = "";
-            bool success = false;
+        public bool TryHandleUserCommand(PlayerAction command, out IActionResult result)
+        { 
+            bool success;
             switch (command)
             {
-                case PlayerAction.MoveAction move:
+                case MoveAction move:
                     // Handle move command
-                    success = TryHandleMove(move, out error);
+                    success = TryHandleMove(move, out MoveResult moveResult);
+                    result = moveResult;
                     break;
-                case PlayerAction.TakeAction take:
-                    success = TryHandleTake(take, out error);
-                    break;
-                case PlayerAction.Quit:
+                case Quit:
                     // Handle quit command
                     HandleQuitGame();
+                    result = new ActionResult(GameError.None);
                     success = true;
                     break;
                 default:
-                    error = "Unknown command type.";
+                    result = new ActionResult(GameError.PlayerGaveUnkownCommand);
                     success = false;
                     break;
             }
+
             if (success)
             {
                 UpdateCurrentPlayer();
@@ -53,45 +53,30 @@ namespace ChessAppTesting
 
             return success;
         }
-        private bool TryHandleMove(MoveAction move, out string? error)
+        private bool TryHandleMove(MoveAction moveAction, out MoveResult result)
         {
             // Get the piece on the From location
-            if (!Board.TryGetPieceAtPosition(move.From, out Piece? selected_piece, out error))
+            if (!Board.TryGetPieceAtPosition(moveAction.Move.From, out Piece? selectedPiece, out GameError error))
             {
+                result = new MoveResult(error, moveAction);
                 return false;
             }
 
-            if (selected_piece.Color != current_player)
+            if (selectedPiece.Color != current_player)
             {
-                error = "Cannot move other players' pieces!";
+                result = new MoveResult(GameError.PlayerCannotMoveOthersPieces, moveAction);
                 return false;
             }
 
             // See if the To location is a valid move-to
-            if (!selected_piece.IsLegalMove(move.From, move.To, out error))
+            if (!selectedPiece.IsLegalMove(moveAction.Move, out error))
             {
-                error = "Illegal move!";
-                return false;
-            }
-            // update the game
-            return selected_piece.TryRegularMove(move.From, move.To, out error);
-        }
-
-        private bool TryHandleTake(TakeAction take, out string? error)
-        {
-            // Get the piece on the From location
-            if (!Board.TryGetPieceAtPosition(take.From, out Piece? selected_piece, out error))
-            {
+                result = new MoveResult(error, moveAction);
                 return false;
             }
 
-            if (selected_piece.Color != current_player)
-            {
-                error = "Cannot move other players' pieces!";
-                return false;
-            }
             // update the game
-            return selected_piece.TryRegularTake(take.From, take.To, out error);
+            return selectedPiece.TryRegularMove(moveAction.Move, out result);
         }
 
         private void HandleQuitGame()

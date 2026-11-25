@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices.Swift;
 using System.Text;
 using ChessAppTesting.Enums;
-using ChessAppTesting.Structs;
 using ChessAppTesting.Records;
 
 namespace ChessAppTesting
@@ -34,7 +33,7 @@ namespace ChessAppTesting
         public bool WhiteKingMayCastle { get; set; } = true;
         public bool BlackKingMayCastle { get; set; } = true;
 
-        private MoveError lastError { get; set; } = MoveError.None;
+        private GameError lastError { get; set; } = GameError.None;
         private Move lastMove { get; set; } = new Move(new Position(0, 0), new Position(0, 0));
 
         // == Constructors ==========================
@@ -60,7 +59,7 @@ namespace ChessAppTesting
 
         public bool TryGetWhiteMoves(
             out List<(PieceID, MoveDelta)> legalMoves,
-            out BoardError error)
+            out GameError error)
         {
             return TryGetLegalMoves(
                 WhitePieces,
@@ -70,7 +69,7 @@ namespace ChessAppTesting
 
         public bool TryGetBlackMoves(
             out List<(PieceID, MoveDelta)> legalMoves,
-            out BoardError error)
+            out GameError error)
         {
             return TryGetLegalMoves(
                 BlackPieces,
@@ -81,17 +80,17 @@ namespace ChessAppTesting
         public bool TryGetLegalMoves(
             List<PieceID> pieces,
             out List<(PieceID, MoveDelta)> legalMoves,
-            out BoardError error)
+            out GameError error)
         {
             legalMoves = new();
-            error = BoardError.None;
+            error = GameError.None;
 
             Piece? piece;
             foreach (PieceID pieceID in pieces)
             {
                 if (!Pieces.TryGetValue(pieceID, out piece))
                 {
-                    error = BoardError.UnknownPieceID;
+                    error = GameError.BoardCannotFindPieceID;
                     continue;
                 }
                 foreach (MoveDelta move in piece.GetLegalMoves(this))
@@ -99,7 +98,7 @@ namespace ChessAppTesting
                     legalMoves.Add((pieceID, move));
                 }
             }
-            return error == BoardError.None;
+            return error == GameError.None;
         }
 
         public bool TryHandleMovePiece(
@@ -108,11 +107,11 @@ namespace ChessAppTesting
             out MoveResult  moveResult)
         {
             lastMove = move;
-            lastError = MoveError.None;
+            lastError = GameError.None;
 
             if (!PositionInBoard(move.To))
             {
-                lastError = MoveError.OutOfBounds;
+                lastError = GameError.BoardPositionOutOfBounds;
                 moveResult = new(lastError, lastMove);
                 return false;
             }
@@ -135,6 +134,7 @@ namespace ChessAppTesting
                 Pieces.Remove(takenPieceID);
             }
 
+            ClearPieceAtPosition(move.From);
             SetPieceAtPosition(moving_piece, move.To);
             moving_piece.Position = move.To;
             moveResult = new(lastError, lastMove);
@@ -144,28 +144,39 @@ namespace ChessAppTesting
         public bool TryAddPieceAtPosition(
             Piece piece,
             Position position,
-            out BoardError error)
+            out GameError error)
         {
             if (!PositionInBoard(position))
             {
-                error = BoardError.OutOfBounds;
+                error = GameError.BoardPositionOutOfBounds;
                 return false;
             }
 
             if (IsPositionOccupiedUnchecked(position))
             {
-                error = BoardError.CannotPlacePieceOnOccupiedSquare;
+                error = GameError.BoardCannotPlacePieceOnOccupiedSquare;
                 return false;
             }
 
             if (Pieces.ContainsKey(piece.ID))
             {
-                error = BoardError.CannotAddSamePieceTwice;
+                error = GameError.BoardCannotAddSamePieceTwice;
                 return false;
             }
 
-            error = BoardError.None;
+            error = GameError.None;
             Pieces.Add(piece.ID, piece);
+            switch (piece.Color)
+            {
+                case TeamColor.White:
+                    WhitePieces.Add(piece.ID);
+                    break;
+                case TeamColor.Black:
+                    BlackPieces.Add(piece.ID);
+                    break;
+                default:
+                    break;
+            }
             SetPieceAtPosition(piece.ID, position);
             return true;
         }
@@ -174,7 +185,7 @@ namespace ChessAppTesting
         public bool TryGetPieceAtPosition(
             Position position,
             [NotNullWhen(true)] out Piece? piece,
-            out BoardError error)
+            out GameError error)
         {
             if (!TryGetPieceIDAtPosition(position, out PieceID pieceID, out error))
             {
@@ -187,31 +198,31 @@ namespace ChessAppTesting
         public bool TryGetPieceIDAtPosition(
             Position position,
             out PieceID pieceID,
-            out BoardError error)
+            out GameError error)
         {
             if (!PositionInBoard(position))
             {
                 pieceID = PieceID.Empty;
-                error = BoardError.OutOfBounds;
+                error = GameError.BoardPositionOutOfBounds;
                 return false;
             }
 
             pieceID = GetPieceIDAtPosition(position);
-            error = BoardError.None;
+            error = GameError.None;
             return pieceID != PieceID.Empty;
         }
 
         public bool TryGetPieceByID(
             PieceID pieceID,
             [NotNullWhen(true)] out Piece? piece,
-            out BoardError error)
+            out GameError error)
         {
             if (!Pieces.TryGetValue(pieceID, out piece))
             {
-                error = BoardError.UnknownPieceID;
+                error = GameError.BoardCannotFindPieceID;
                 return false;
             }
-            error = BoardError.None;
+            error = GameError.None;
             return true;
         }
 
@@ -221,11 +232,14 @@ namespace ChessAppTesting
                 position.Y >= 0 &&
                 position.Y < max_y;
 
+        public bool IsPositionOccupied(int x, int y)
+            => IsPositionOccupied(new Position(x, y));
+
         public bool IsPositionOccupied(Position position)
         {
             if (!PositionInBoard(position))
             {
-                lastError = MoveError.OutOfBounds;
+                lastError = GameError.BoardPositionOutOfBounds;
                 return false;
             }
             return IsPositionOccupiedUnchecked(position);

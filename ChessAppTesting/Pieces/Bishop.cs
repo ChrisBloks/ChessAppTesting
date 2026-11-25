@@ -17,11 +17,11 @@ namespace ChessAppTesting.Pieces
         internal override bool IsLegalMove(
             Move move,
             ChessBoard board,
-            out MoveError error)
+            out GameError error)
         {
             if (move.From != Position)
             {
-                error = MoveError.PieceNotAtFromLocation;
+                error = GameError.PieceNotAtMoveFromLocation;
                 return false;
             }
             return IsDiagonalPathClear(move.ToDelta(), Position, ParentBoard, out error);
@@ -38,11 +38,11 @@ namespace ChessAppTesting.Pieces
             MoveDelta moveDelta,
             Position startPosition,
             ChessBoard board,
-            out MoveError error)
+            out GameError error)
         {
             if (!moveDelta.IsDiagonal())
             {
-                error = MoveError.InvallidMoveForThisPiece;
+                error = GameError.InvalidMoveForThisPiece;
                 return false;
             }
 
@@ -55,7 +55,7 @@ namespace ChessAppTesting.Pieces
                 tempPosition = startPosition + (direction * i);
                 if (board.IsPositionOccupied(tempPosition))
                 {
-                    error = MoveError.BlockedByPiece;
+                    error = GameError.MoveBlockedByPiece;
                     return false;
                 }
             }
@@ -67,11 +67,11 @@ namespace ChessAppTesting.Pieces
                     out _) &&
                 mystery_piece.Color == this.Color) 
             {
-                error = MoveError.CannotTakeOwnPiece;
+                error = GameError.CannotTakeOwnPiece;
                 return false;
             }
 
-            error = MoveError.None;
+            error = GameError.None;
             return true;
         }
 

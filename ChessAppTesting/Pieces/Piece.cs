@@ -6,7 +6,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Text;
 using ChessAppTesting.Records;
-using ChessAppTesting.Structs;
 
 namespace ChessAppTesting.Pieces
 {
@@ -58,7 +57,7 @@ namespace ChessAppTesting.Pieces
         internal bool IsLegalMove(
             Position from,
             Position to,
-            out MoveError error) 
+            out GameError error) 
             => IsLegalMove(
                 new Move(from, to),
                 ParentBoard,
@@ -66,16 +65,23 @@ namespace ChessAppTesting.Pieces
 
         internal bool IsLegalMove(
             MoveDelta moveDelta,
-            out MoveError error) =>
+            out GameError error) =>
             IsLegalMove(
                 new Move(Position, moveDelta),
                 ParentBoard,
                 out error);
+        internal bool IsLegalMove(
+            Move move,
+            out GameError error)
+            => IsLegalMove(
+                move: move,
+                board: ParentBoard,
+                error: out error);
 
         internal abstract bool IsLegalMove(
             Move move,
             ChessBoard board,
-            out MoveError error);
+            out GameError error);
         
         public List<MoveDelta> GetLegalMoves() 
             => GetLegalMoves(
@@ -113,7 +119,7 @@ namespace ChessAppTesting.Pieces
             if (!IsLegalMove(
                 move,
                 ParentBoard,
-                out MoveError error))
+                out GameError error))
             {
                 result = new MoveResult(error, move);
                 return false;

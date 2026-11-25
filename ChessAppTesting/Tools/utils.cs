@@ -48,7 +48,7 @@ namespace ChessAppTesting.Tools
             if (piece != null)
             {
                 Console.WriteLine($"Piece ID: {piece.ID}");
-                Console.WriteLine($"Position: ({piece.Position.x}, {piece.Position.y})");
+                Console.WriteLine($"Position: ({piece.Position.X}, {piece.Position.Y})");
             }
             else
             {
@@ -70,7 +70,7 @@ namespace ChessAppTesting.Tools
             {
                 col = cols[i];
             }
-            catch (IndexOutOfRangeException _)
+            catch (IndexOutOfRangeException)
             {
                 col = '?';
                 return false;

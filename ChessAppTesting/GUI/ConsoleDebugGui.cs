@@ -143,19 +143,6 @@ namespace ChessAppTesting.GUI
                         error = "Invalid coordinates.";
                         return false;
                     }
-                case ["take", var from, var to]:
-                    if (TryParseAsCoordinates(from, out from_coords) &&
-                        TryParseAsCoordinates(to, out to_coords))
-                    {
-                        command = new PlayerAction.TakeAction(from_coords, to_coords);
-                        return true;
-                    }
-                    else
-                    {
-                        command = null;
-                        error = "Invalid coordinates.";
-                        return false;
-                    }
                 case ["help"] or ["h"]:
                     command = null;
                     error = "Valid commands: ['q', 'quit', 'move A1 B2', 'h', 'help']";
